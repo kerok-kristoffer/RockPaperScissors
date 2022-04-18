@@ -38,7 +38,7 @@ public class GameController {
     }
 
     @GetMapping("{id}")
-    GameReport one(@PathVariable UUID id) {
+    GameReport getGameById(@PathVariable UUID id) {
 
         Game game = gameService.findById(id).orElseThrow(() -> new GameNotFoundException(id));
         return gameReportFactory.createGameReport(game);
