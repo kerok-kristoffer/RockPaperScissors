@@ -12,9 +12,11 @@ public class Player {
     @Id
     UUID id;
     private String name;
+    private String hash;
 
-    public Player(@JsonProperty("name")String name) {
+    public Player(@JsonProperty("name")String name, @JsonProperty String hash) {
         this.name = name;
+        this.hash = hash;
         this.id = UUID.randomUUID();
     }
 
@@ -35,5 +37,9 @@ public class Player {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getHash() {
+        return hash;
     }
 }

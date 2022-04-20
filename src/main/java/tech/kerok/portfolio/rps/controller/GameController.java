@@ -33,7 +33,7 @@ public class GameController {
     @PostMapping()
     GameReport newGame(@RequestBody PlayerDTO hostDTO) {
 
-        Player player = playerService.getOrAdd(hostDTO);
+        Player player = playerService.getOrAdd(hostDTO); // TODO kerok - move to GameService?
         return gameReportFactory.createGameReport(gameService.addGame(player));
     }
 

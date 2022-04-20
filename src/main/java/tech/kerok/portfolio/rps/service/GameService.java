@@ -3,11 +3,9 @@ package tech.kerok.portfolio.rps.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tech.kerok.portfolio.rps.dto.PlayerMoveDTO;
-import tech.kerok.cygni.rps.model.*;
 import tech.kerok.portfolio.rps.model.*;
 import tech.kerok.portfolio.rps.repository.GameRepository;
 import tech.kerok.portfolio.rps.repository.PlayerMoveRepository;
-import tech.kerok.cygni.rps.service.exceptions.*;
 import tech.kerok.portfolio.rps.service.exceptions.*;
 
 import java.util.List;
