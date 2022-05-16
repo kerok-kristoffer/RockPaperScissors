@@ -13,7 +13,7 @@ public class Game {
 
     private UUID hostId;
     private UUID guestId;
-    private final int maxPlayerCount = 2;
+    private final int MAX_PLAYER_COUNT = 2;
     private String gameStatus;
 
     public Game() {
@@ -56,6 +56,6 @@ public class Game {
     }
 
     public int getMaxPlayerCount() {
-        return this.maxPlayerCount;
+        return this.MAX_PLAYER_COUNT;
     }
 }

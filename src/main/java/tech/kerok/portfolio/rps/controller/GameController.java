@@ -33,40 +33,42 @@ public class GameController {
     @PostMapping()
     GameReport newGame(@RequestBody PlayerDTO hostDTO) {
 
-        Player player = playerService.getOrAdd(hostDTO); // TODO kerok - move to GameService?
-        return gameReportFactory.createGameReport(gameService.addGame(player));
+        Game game = gameService.addGame(hostDTO);
+        return gameReportFactory.createGameReport(game);
     }
 
     @GetMapping("{id}")
     GameReport getGameById(@PathVariable UUID id) {
 
         Game game = gameService.findById(id).orElseThrow(() -> new GameNotFoundException(id));
-        return gameReportFactory.createGameReport(game);
+        return gameReportFactory.createGameReport(game); // TODO kerok - seems to be public? enable private games requiring a PlayerDTO with pass to see?
     }
 
     @PostMapping("{id}")
-    GameReport getGameReportByPlayer(@PathVariable UUID id, @RequestBody PlayerDTO playerDTO) {
+    GameReport getGameReportByPlayer(@PathVariable UUID id, @RequestBody PlayerDTO playerDTO) { // TODO kerok - is this needed? - if we want privacy, yes!
         Game game = gameService.findById(id).orElseThrow(() -> new GameNotFoundException(id));
         Player player = playerService.getByName(playerDTO.getName()).orElseThrow(() -> new PlayerNotInGameException(playerDTO.getName()));
         return gameReportFactory.createGameReport(game, player);
     }
 
-    @PostMapping("{id}/join")
-    GameReport joinGame(@PathVariable UUID id, @RequestBody PlayerDTO guestDTO) {
+    @PostMapping("{gameId}/join")
+    GameReport joinGame(@PathVariable UUID gameId, @RequestBody PlayerDTO guestDTO) {
 
         Player guest = playerService.getOrAdd(guestDTO);
-        Game game = gameService.findById(id).orElseThrow(() -> new GameNotFoundException(id));
-
-        Game joinedGame = gameService.joinGame(game, guest);
+        Game joinedGame = gameService.joinGame(gameId, guest);
 
         return gameReportFactory.createGameReport(joinedGame, guest);
     }
 
-    @PostMapping("{id}/move")
-    GameReport addMove(@PathVariable UUID id, @RequestBody PlayerMoveDTO newMove) {
+    @PostMapping("{gameId}/move")
+    GameReport addMove(@PathVariable UUID gameId, @RequestBody PlayerMoveDTO newMove) {
 
+        // todo kerok - refactor this to take a move on first join? would streamline to just one request sent per player,
+        //      returning gameReport to second player. First player would still need to request the result.
+        //      Could use gameId, or just userName to find last open game as well?
+                // TODO add this use case when done refactoring standard.
         Player player = playerService.getByName(newMove.getName()).orElseThrow(() -> new PlayerNotInGameException(newMove.getName()));
-        Game gameMoved = gameService.addMoveToGame(id, player, newMove);
+        Game gameMoved = gameService.addMoveToGame(gameId, newMove);
 
         return gameReportFactory.createGameReport(gameMoved, player);
     }

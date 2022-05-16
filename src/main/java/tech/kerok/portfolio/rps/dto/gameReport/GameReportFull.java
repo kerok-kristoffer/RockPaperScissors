@@ -2,7 +2,8 @@ package tech.kerok.portfolio.rps.dto.gameReport;
 
 import tech.kerok.portfolio.rps.model.Game;
 import tech.kerok.portfolio.rps.model.Player;
-import tech.kerok.portfolio.rps.model.PlayerMove;
+import tech.kerok.portfolio.rps.service.GameResult;
+import tech.kerok.portfolio.rps.service.GameService;
 
 public class GameReportFull extends GameReport {
 
@@ -18,25 +19,20 @@ public class GameReportFull extends GameReport {
     public void generateReportMessage() {
         StringBuilder stringBuilder = new StringBuilder();
 
-
         stringBuilder.append(this.getGameReportMessage());
-        stringBuilder.append(", " + hostMove.getPlayerName() + ": " + hostMove.getMove());
-        stringBuilder.append(", " + guestMove.getPlayerName() + ": " + guestMove.getMove());
+        stringBuilder.append(String.format(", %s: %s", hostMove.getPlayerName(), hostMove.getMove()));
+        stringBuilder.append(String.format(", %s: %s", guestMove.getPlayerName(), guestMove.getMove()));
 
-        String winner = calculateWinner(hostMove, guestMove);
-        stringBuilder.append(", " + winner);
+        GameResult result = GameService.calculateWinner(hostMove, guestMove);
+        switch (result) {
+            case HOST_WINNER:
+                stringBuilder.append(String.format("%s is the Winner", hostMove.getPlayerName()));
+            case GUEST_WINNER:
+                stringBuilder.append(String.format("%s is the Winner.", guestMove.getPlayerName()));
+            case TIE:
+                stringBuilder.append(", The game is a tie.");
+        }
 
         this.gameReportMessage = stringBuilder.toString();
-    }
-
-    private String calculateWinner(PlayerMove hostMove, PlayerMove guestMove) {
-        int hostValue = hostMove.getMove().getValue();
-        int guestValue = guestMove.getMove().getValue();
-        if ((hostValue + 1) % 3 == guestValue) {
-            return guestMove.getPlayerName() + " is the Winner!";
-        } else if( hostValue == guestValue) {
-            return "The game is a draw!";
-        }
-        return hostMove.getPlayerName() + " is the Winner!";
     }
 }

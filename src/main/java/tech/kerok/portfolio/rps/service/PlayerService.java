@@ -8,8 +8,6 @@ import tech.kerok.portfolio.rps.repository.PlayerRepository;
 import tech.kerok.portfolio.rps.service.exceptions.InvalidPlayerFormatException;
 import tech.kerok.portfolio.rps.service.exceptions.WrongPasswordException;
 
-import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -25,28 +23,22 @@ public class PlayerService {
         return playerRepository.findByName(name);
     }
 
-    public Player getOrAdd(PlayerDTO hostDTO) {
+    public Player getOrAdd(PlayerDTO playerDTO) {
 
-        if (hostDTO.getName() == null) {
+        if (playerDTO.getName() == null) {
             throw new InvalidPlayerFormatException();
         }
 
-        Optional<Player> player = getByName(hostDTO.getName());
-        String hash = null;
-        try {
-            hash = HashService.createMD5Hash(hostDTO.getPass());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace(); // TODO add proper handling of Exception?
-        }
+        Optional<Player> player = getByName(playerDTO.getName());
+        String hash = HashService.createMD5Hash(playerDTO.getPass());
 
-        String finalHash = hash;
         Player player1 = player.orElseGet(() -> {
-            Player newPlayer = new Player(hostDTO.getName(), finalHash);
+            Player newPlayer = new Player(playerDTO.getName(), hash);
             playerRepository.save(newPlayer);
             return newPlayer;
         });
 
-        if(!HashService.verify(player1.getHash(), finalHash)) {
+        if(!HashService.verify(player1.getHash(), hash)) {
             throw new WrongPasswordException();
         }
 

@@ -3,11 +3,18 @@ package tech.kerok.portfolio.rps.service;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.NoSuchElementException;
 
 public class HashService {
-    public static String createMD5Hash(String input) throws NoSuchAlgorithmException {
+    public static String createMD5Hash(String input) {
 
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            throw new NoSuchElementException();
+        }
         byte[] messageDigest = md.digest(input.getBytes());
         return convertToHex(messageDigest);
     }

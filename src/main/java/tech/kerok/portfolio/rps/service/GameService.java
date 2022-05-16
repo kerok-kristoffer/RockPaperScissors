@@ -2,12 +2,14 @@ package tech.kerok.portfolio.rps.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import tech.kerok.portfolio.rps.dto.PlayerDTO;
 import tech.kerok.portfolio.rps.dto.PlayerMoveDTO;
 import tech.kerok.portfolio.rps.model.*;
 import tech.kerok.portfolio.rps.repository.GameRepository;
 import tech.kerok.portfolio.rps.repository.PlayerMoveRepository;
 import tech.kerok.portfolio.rps.service.exceptions.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,23 +20,30 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final PlayerMoveRepository playerMoveRepository;
+    private final PlayerService playerService;
 
     @Autowired
     public GameService(
-            GameRepository gameRepository, PlayerMoveRepository playerMoveRepository) {
+            GameRepository gameRepository,
+            PlayerMoveRepository playerMoveRepository,
+            PlayerService playerService) {
         this.gameRepository = gameRepository;
         this.playerMoveRepository = playerMoveRepository;
+        this.playerService = playerService;
     }
 
-    public Game addGame(Player host) {
-        Game game = new Game(host.getId());
+    public Game addGame(PlayerDTO hostDTO) {
+
+        Player hostPlayer = playerService.getOrAdd(hostDTO);
+        Game game = new Game(hostPlayer.getId());
+
         game.setGameStatus(GameStatus.HOSTED);
 
         gameRepository.save(game);
         return game;
     }
 
-    public List getAll() {
+    public List<Game> getAll() {
         return gameRepository.findAll();
     }
 
@@ -62,10 +71,10 @@ public class GameService {
         PlayerMove playerMove = new PlayerMove(game.getId(), player, move);
         playerMoveRepository.save(playerMove);
 
-        int playerMoveCountForCurrentGame = playerMoveRepository.findByGameId(game.getId()).size();
+        long playerMoveCountForCurrentGame = playerMoveRepository.findByGameId(game.getId()).size();
         if (playerMoveCountForCurrentGame < game.getMaxPlayerCount()) {
             game.setGameStatus(GameStatus.AWAITING_MOVE);
-        } else if (playerMoveCountForCurrentGame == game.getMaxPlayerCount()){
+        } else if (playerMoveCountForCurrentGame == game.getMaxPlayerCount()) {
             game.setGameStatus(GameStatus.RESOLVED);
         } else {
             throw new RuntimeException("Something went wrong with player count");
@@ -83,7 +92,9 @@ public class GameService {
                 ( guestId.isPresent() && playerId.equals(guestId.get()) ));
     }
 
-    public Game joinGame(Game game, Player guest) {
+    public Game joinGame(UUID gameId, Player guest) {
+
+        Game game = findById(gameId).orElseThrow(() -> new GameNotFoundException(gameId));
 
         if (guest.getId().equals(game.getHostId())) {
             throw new PlayerAlreadyInGameException(guest.getName());
@@ -98,9 +109,27 @@ public class GameService {
         return game;
     }
 
-    public Game addMoveToGame(UUID gameId, Player player, PlayerMoveDTO newMove) {
+    public Game addMoveToGame(UUID gameId, PlayerMoveDTO newMove) {
+
         Game game = findById(gameId).orElseThrow(() -> new GameNotFoundException(gameId));
+        Player player = playerService.getByName(newMove.getName()).orElseThrow(() -> new PlayerNotInGameException(newMove.getName()));
+
+        String playerMoveHash = HashService.createMD5Hash(newMove.getPass());
+        if (!HashService.verify(player.getHash(), playerMoveHash)) {
+            throw new WrongPasswordException();
+        }
 
         return executeMove(game, player, newMove.getMove());
+    }
+
+    public static GameResult calculateWinner(PlayerMove hostMove, PlayerMove guestMove) {
+
+        List<Move> moveSet = new ArrayList<>(); // TODO kerok - make part of game parameters on create! - make enum MoveSet with predefined movesets?
+        moveSet.add(Move.Rock);
+        moveSet.add(Move.Paper);
+        moveSet.add(Move.Scissors);
+        MoveChain moveChain = new MoveChain(moveSet);
+
+        return moveChain.evaluate(hostMove.getMove(), guestMove.getMove());
     }
 }
